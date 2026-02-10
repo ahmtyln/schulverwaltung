@@ -27,18 +27,11 @@ public class Student {
     @GeneratedValue (strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true,nullable = false)
-    private String username;
-
     @Column(name = "name", nullable = false)
     private String name;
 
     @Column(name = "surname")
     private String surname;
-
-    @Email(message = "Geben Sie bitte gültige email adresse ein.")
-    @Column(name = "email", unique = true)
-    private String email;
 
     @Column(name = "address")
     private String address;
@@ -69,7 +62,7 @@ public class Student {
     private Class aClass;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "gradeId", nullable = false)
+    @JoinColumn(name = "gradeId")
     private Grade grade;
 
     @OneToMany(mappedBy = "student", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
@@ -78,7 +71,7 @@ public class Student {
     @OneToMany(mappedBy = "student", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Attendance> attendances = new ArrayList<>();
 
-    @OneToOne(fetch = FetchType.LAZY,optional = false)
+    @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.PERSIST,optional = false)
     @JoinColumn(name = "userId", nullable = false, unique = true)
     private User user;
 }

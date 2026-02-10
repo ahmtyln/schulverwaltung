@@ -3,6 +3,7 @@ package com.schulverwaltung.backend.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.schulverwaltung.backend.enums.Role;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,8 +24,11 @@ public class User {
 
     @Column(name = "username",nullable = false,unique = true,length = 100)
     private String username;
+
+    @Email(message = "Geben Sie bitte gültige email adresse ein.")
     @Column(name = "email",nullable = false,unique = true,length = 100)
     private String email;
+
     @Column(name = "password",nullable = false)
     private String password;
 
@@ -32,17 +36,7 @@ public class User {
     @Column(name = "role",nullable = false)
     private Role role;
 
+
 }
 
 
-//    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY,cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Student student;
-//
-//    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY,cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Teacher teacher;
-//
-//    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY,cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Admin admin;
-//
-//    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY,cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Parent parent;
