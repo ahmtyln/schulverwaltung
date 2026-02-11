@@ -25,6 +25,13 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/students/register").permitAll()
+                        .requestMatchers("/api/parents/register").permitAll()
+                        .requestMatchers("/api/teachers/register").permitAll()
+                        .requestMatchers("/api/admin/register").permitAll()
+                        .requestMatchers("/api/students/**").hasRole("STUDENT")
+                        .requestMatchers("/api/parents/**").hasRole("PARENT")
+                        .requestMatchers("/api/teachers/**").hasRole("TEACHER")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/auth/login").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session

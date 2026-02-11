@@ -27,8 +27,6 @@ public class Teacher {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true,nullable = false)
-    private String username;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -36,9 +34,6 @@ public class Teacher {
     @Column(name = "surname")
     private String surname;
 
-    @Email(message = "Geben Sie bitte gültige email adresse ein.")
-    @Column(name = "email", unique = true)
-    private String email;
 
     @Column(name = "address")
     private String address;

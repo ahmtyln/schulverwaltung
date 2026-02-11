@@ -27,21 +27,21 @@ public class JwtService {
                 .builder()
                 .subject(username)
                 .claims(claims)
-                .signWith(getSignKey(SECRET_KEY),Jwts.SIG.HS256)
+                .signWith(getSignKey(),Jwts.SIG.HS256)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis()+1000*60*60*24))
                 .compact();
     }
 
-    public SecretKey getSignKey(String key){
-        byte[] decode = Decoders.BASE64.decode(key);
+    public SecretKey getSignKey(){
+        byte[] decode = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(decode);
     }
 
     public String extractUsernameFromToken(String token){
         return Jwts
                 .parser()
-                .verifyWith(getSignKey(SECRET_KEY))
+                .verifyWith(getSignKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
@@ -51,7 +51,7 @@ public class JwtService {
     public boolean validateToken(String token, CustomUserDetails userDetails){
         Claims claim = Jwts
                 .parser()
-                .verifyWith(getSignKey(SECRET_KEY))
+                .verifyWith(getSignKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

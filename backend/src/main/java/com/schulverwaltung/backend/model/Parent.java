@@ -26,18 +26,11 @@ public class Parent {
     @JsonProperty("parentId")
     private Long id;
 
-    @Column(name = "username", unique = true, nullable = false)
-    private String username;
-
     @Column(name = "name")
     private String name;
 
     @Column(name = "surname")
     private String surname;
-
-    @Email(message = "Geben Sie bitte gültige email adresse ein.")
-    @Column(name = "email", unique = true)
-    private String email;
 
     @Column(name = "phoneNumber",unique = true)
     private String phone;
@@ -52,7 +45,7 @@ public class Parent {
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Student> students = new ArrayList<>();
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.PERSIST,optional = false)
     @JoinColumn(name = "userId", nullable = false, unique = true)
     private User user;
 

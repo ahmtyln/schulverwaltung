@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -28,14 +27,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException{
-        String authentication = request.getHeader("Authentication");
+        String authHeader = request.getHeader("Authorization");
 
-        if(authentication==null && !authentication.startsWith("Bearer ")){
+        if(authHeader==null || !authHeader.startsWith("Bearer ")){
             filterChain.doFilter(request,response);
             return;
         }
 
-        String token = authentication.substring(7);
+        String token = authHeader.substring(7);
         String username = jwtService.extractUsernameFromToken(token);
 
         if(username !=null && SecurityContextHolder.getContext().getAuthentication()==null){
