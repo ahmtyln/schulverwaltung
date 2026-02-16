@@ -17,7 +17,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Class {
+public class Aclass {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "classId")

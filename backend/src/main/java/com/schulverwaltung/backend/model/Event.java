@@ -33,5 +33,5 @@ public class Event {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "classId")
-    private Class aClass;
+    private Aclass aClass;
 }

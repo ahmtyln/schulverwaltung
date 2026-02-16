@@ -27,7 +27,7 @@ public class Grade {
     private int level;
 
     @OneToMany(mappedBy = "grade", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private List<Class> classes = new ArrayList<>();
+    private List<Aclass> aclasses = new ArrayList<>();
 
     @OneToMany(mappedBy = "grade", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Student> students = new ArrayList<>();

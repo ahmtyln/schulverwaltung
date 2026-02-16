@@ -41,7 +41,7 @@ public class Lesson {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "classId", referencedColumnName = "classId")
-    private Class aClass;
+    private Aclass aClass;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacherId")

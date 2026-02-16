@@ -3,7 +3,6 @@ package com.schulverwaltung.backend.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.schulverwaltung.backend.enums.UserSex;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,13 +26,11 @@ public class Teacher {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
     @Column(name = "name", nullable = false)
     private String name;
 
     @Column(name = "surname")
     private String surname;
-
 
     @Column(name = "address")
     private String address;
@@ -62,9 +59,9 @@ public class Teacher {
     private List<Lesson> lessons = new ArrayList<>();
 
     @OneToMany(mappedBy = "teacher", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private List<Class> classes = new ArrayList<>();
+    private List<Aclass> aclasses = new ArrayList<>();
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "userId", nullable = false, unique = true)
     private User user;
 

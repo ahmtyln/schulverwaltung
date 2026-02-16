@@ -1,8 +1,11 @@
 package com.schulverwaltung.backend.service;
 
+import com.schulverwaltung.backend.DTOs.ErrorResponseDto;
 import com.schulverwaltung.backend.DTOs.RegisterRequestDto;
 import com.schulverwaltung.backend.DTOs.RegisterResponseDto;
 import com.schulverwaltung.backend.enums.Role;
+import com.schulverwaltung.backend.exceptions.EmailAlreadyExistsException;
+import com.schulverwaltung.backend.exceptions.UsernameAlreadyExistsException;
 import com.schulverwaltung.backend.model.Student;
 import com.schulverwaltung.backend.model.User;
 import com.schulverwaltung.backend.repository.StudentRepository;
@@ -24,10 +27,10 @@ public class StudentService {
     public RegisterResponseDto register(RegisterRequestDto request){
 
         if(userRepository.existsByUsername(request.getUsername())){
-            throw new RuntimeException("Username existiert bereits.");
+            throw new UsernameAlreadyExistsException("Username existiert bereits.");
         }
         if(userRepository.existsByEmail(request.getEmail())){
-            throw new RuntimeException("Email existiert bereits.");
+            throw new EmailAlreadyExistsException("Email existiert bereits.");
         }
 
         User user = new User();

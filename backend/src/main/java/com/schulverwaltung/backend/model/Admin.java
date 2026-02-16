@@ -24,11 +24,10 @@ public class Admin {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Email(message = "Geben Sie bitte gültige email adresse ein.")
-    @Column(name = "email", nullable = false)
-    private String email;
+    @Column(name = "surname", nullable = false)
+    private String surname;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "userId", nullable = false, unique = true)
     private User user;
 

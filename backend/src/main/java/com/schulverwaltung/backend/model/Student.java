@@ -3,11 +3,7 @@ package com.schulverwaltung.backend.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.schulverwaltung.backend.enums.UserSex;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -20,6 +16,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Student {
     @Id
     @Column(name = "studentId")
@@ -59,7 +56,7 @@ public class Student {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "classId")
-    private Class aClass;
+    private Aclass aClass;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gradeId")

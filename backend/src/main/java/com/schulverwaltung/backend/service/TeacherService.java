@@ -5,9 +5,9 @@ import com.schulverwaltung.backend.DTOs.RegisterResponseDto;
 import com.schulverwaltung.backend.enums.Role;
 import com.schulverwaltung.backend.exceptions.EmailAlreadyExistsException;
 import com.schulverwaltung.backend.exceptions.UsernameAlreadyExistsException;
-import com.schulverwaltung.backend.model.Parent;
+import com.schulverwaltung.backend.model.Teacher;
 import com.schulverwaltung.backend.model.User;
-import com.schulverwaltung.backend.repository.ParentRepository;
+import com.schulverwaltung.backend.repository.TeacherRepository;
 import com.schulverwaltung.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -17,9 +17,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class ParentService {
+public class TeacherService {
     private final UserRepository userRepository;
-    private final ParentRepository parentRepository;
+    private final TeacherRepository teacherRepository;
     private final PasswordEncoder passwordEncoder;
 
     public RegisterResponseDto register(RegisterRequestDto request){
@@ -35,33 +35,35 @@ public class ParentService {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.PARENT);
+        user.setRole(Role.TEACHER);
 
-        Parent parent = new Parent();
-        parent.setName(request.getName());
-        parent.setSurname(request.getSurname());
-        parent.setUser(user);
+        Teacher teacher = new Teacher();
+        teacher.setName(request.getName());
+        teacher.setSurname(request.getSurname());
+        teacher.setUser(user);
 
-        parentRepository.save(parent);
+        teacherRepository.save(teacher);
 
         RegisterResponseDto responseDto = new RegisterResponseDto();
-        responseDto.setName(parent.getName());
-        responseDto.setSurname(parent.getSurname());
-        responseDto.setEmail(parent.getUser().getEmail());
+
+        responseDto.setSurname(teacher.getSurname());
+        responseDto.setEmail(teacher.getUser().getEmail());
+        responseDto.setName(teacher.getName());
 
         return responseDto;
     }
 
-    public RegisterResponseDto profileParent(Authentication authentication){
-        User user = userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new UsernameNotFoundException("User ist nicht gefunden!"));
-        Parent parent = parentRepository.findByUserId(user.getId()).orElseThrow(() -> new RuntimeException("Parent ist nicht gefunden."));
+    public RegisterResponseDto teacherProfile(Authentication authentication){
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Benutzer ist nicht gefunden!"));
+        Teacher teacher = teacherRepository.findByUserId(user.getId()).orElseThrow(() -> new RuntimeException("Teacher ist nicht gefunden."));
 
-        RegisterResponseDto response = new RegisterResponseDto();
+        RegisterResponseDto responseDto = new RegisterResponseDto();
 
-        response.setEmail(parent.getUser().getEmail());
-        response.setSurname(parent.getSurname());
-        response.setName(parent.getName());
+        responseDto.setSurname(teacher.getSurname());
+        responseDto.setEmail(teacher.getUser().getEmail());
+        responseDto.setName(teacher.getName());
 
-        return response;
+        return responseDto;
     }
 }
