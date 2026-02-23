@@ -72,4 +72,39 @@ public class AdminController {
     }
 
 
+    @PostMapping("/teachers")
+    public ResponseEntity<TeacherResponseDto> addTeacher(
+            @Valid @RequestBody AddTeacherRequestDto request) {
+        return ResponseEntity.ok(adminService.addTeacher(request));
+    }
+
+    @PutMapping("/teachers/{id}")
+    public ResponseEntity<TeacherResponseDto> updateTeacher(@PathVariable Long id, @Valid @RequestBody UpdateTeacherRequestDto request){
+        return ResponseEntity.ok(adminService.updateTeacher(id,request));
+    }
+
+    @DeleteMapping("/teachers/{id}")
+    public void deleteTeacher(@PathVariable Long id){
+        adminService.deleteTeacher(id);
+    }
+
+    @PostMapping("/parents")
+    public ResponseEntity<ParentResponseDto> addParent(
+            @Valid @RequestBody AddParentRequestDto request) {
+        return ResponseEntity.ok(adminService.addParent(request));
+    }
+
+    @PutMapping("/parents/{id}")
+    public ResponseEntity<ParentResponseDto> updateParent(@PathVariable Long id, @Valid @RequestBody UpdateParentRequestDto request){
+        return ResponseEntity.ok(adminService.updateParent(id,request));
+    }
+
+    @DeleteMapping("/parents/{id}")
+    public void deleteParent(@PathVariable Long id){
+        adminService.deleteParent(id);
+    }
+
+
+
+
 }

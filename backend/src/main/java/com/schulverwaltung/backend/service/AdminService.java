@@ -19,6 +19,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class AdminService {
@@ -29,6 +32,7 @@ public class AdminService {
     private final TeacherRepository teacherRepository;
     private final GradeRepository gradeRepository;
     private final ClassRepository classRepository;
+    private final LessonRepository lessonRepository;
     private final PasswordEncoder passwordEncoder;
     private final ParentListMapper parentListMapper;
     private final StudentListMapper studentListMapper;
@@ -176,4 +180,154 @@ public class AdminService {
         studentRepository.delete(student);
 
     }
+
+    public TeacherResponseDto addTeacher(AddTeacherRequestDto request){
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException("Email existiert bereits.");
+        }
+
+        User user = User.builder()
+                .username(request.getEmail())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.TEACHER)
+                .build();
+
+        Teacher teacher = Teacher.builder()
+                .name(request.getName())
+                .surname(request.getSurname())
+                .phone(request.getPhone())
+                .user(user)
+                .build();
+
+
+        if(request.getLessonIds() != null){
+            List<Lesson> lessons = lessonRepository.findAllById(request.getLessonIds());
+            teacher.getLessons().addAll(lessons);
+        }
+
+        teacherRepository.save(teacher);
+
+        return TeacherResponseDto.builder()
+                .id(teacher.getId())
+                .fullName(teacher.getName() + " " + teacher.getSurname())
+                .email(user.getEmail())
+                .phone(teacher.getPhone())
+                .lessons(teacher.getLessons().stream().map(Lesson::getName).toList())
+                .build();
+    }
+
+    public TeacherResponseDto updateTeacher(Long id, UpdateTeacherRequestDto request){
+        if (!id.equals(request.getId())) {
+            throw new RuntimeException("Path ID ≠ Body ID!");
+        }
+        Teacher teacher = teacherRepository.findById(request.getId())
+                .orElseThrow(() -> new RuntimeException("Teacher ist nicht gefunden."));
+
+        if (request.getName() != null) teacher.setName(request.getName());
+        if (request.getSurname() != null) teacher.setSurname(request.getSurname());
+        if (request.getPhone() != null) teacher.setPhone(request.getPhone());
+
+
+        if (request.getLessonIds() != null) {
+            teacher.getLessons().clear();
+            List<Lesson> lessons = lessonRepository.findAllById(request.getLessonIds());
+            teacher.getLessons().addAll(lessons);
+        }
+
+        teacherRepository.save(teacher);
+
+        return TeacherResponseDto.builder()
+                .id(teacher.getId())
+                .fullName(teacher.getName() + " " + teacher.getSurname())
+                .email(teacher.getUser().getEmail())
+                .phone(teacher.getPhone())
+                .lessons(teacher.getLessons().stream().map(Lesson::getName).toList())
+                .build();
+    }
+
+    public void deleteTeacher(Long id) {
+        Teacher teacher = teacherRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Teacher ist nicht gefunden."));
+        teacherRepository.delete(teacher);
+    }
+
+    public ParentResponseDto addParent(AddParentRequestDto request){
+        if(userRepository.existsByEmail(request.getEmail())){
+            throw new EmailAlreadyExistsException("Email existiert bereits.");
+        }
+
+        User user = User.builder()
+                .username(request.getEmail())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.PARENT)
+                .build();
+
+        Parent parent = Parent.builder()
+                .name(request.getName())
+                .surname(request.getSurname())
+                .phone(request.getPhone())
+                .user(user)
+                .build();
+
+        if(request.getStudentIds()!= null && !request.getStudentIds().isEmpty()){
+            List<Student> students = studentRepository.findAllById(request.getStudentIds());
+            parent.setStudents(students);
+        }
+
+        parentRepository.save(parent);
+
+        return ParentResponseDto.builder()
+                .id(parent.getId())
+                .fullName(parent.getName() + " " + parent.getSurname())
+                .email(parent.getUser().getEmail())
+                .phone(parent.getPhone())
+                .students(parent.getStudents().stream().map(s -> s.getName() + " " + s.getSurname()).toList())
+                .build();
+    }
+
+    public ParentResponseDto updateParent(Long id, UpdateParentRequestDto request){
+        if (!id.equals(request.getId())) {
+            throw new RuntimeException("Path ID ≠ Body ID!");
+        }
+
+        Parent parent = parentRepository.findById(request.getId()).orElseThrow(() -> new RuntimeException("Parent ist nicht gefunden."));
+
+        if(request.getName()!=null){
+            parent.setName(request.getName());
+        }
+
+        if(request.getSurname()!=null){
+            parent.setSurname(request.getSurname());
+        }
+
+        if(request.getPhone()!=null){
+            parent.setPhone(request.getPhone());
+        }
+
+        if(request.getStudentIds() != null){
+            List<Student> students = studentRepository.findAllById(request.getStudentIds());
+            parent.setStudents(students);
+        }
+
+        parentRepository.save(parent);
+
+        return ParentResponseDto.builder()
+                .id(parent.getId())
+                .fullName(parent.getName() + " " + parent.getSurname())
+                .email(parent.getUser().getEmail())
+                .phone(parent.getPhone())
+                .students(parent.getStudents().stream().map(s -> s.getName() + " " + s.getSurname()).toList())
+                .build();
+    }
+
+
+    public void deleteParent(Long id) {
+        Parent parent = parentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Parent ist nicht gefunden."));
+        parentRepository.delete(parent);
+    }
+
+
 }

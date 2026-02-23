@@ -3,10 +3,7 @@ package com.schulverwaltung.backend.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.schulverwaltung.backend.enums.UserSex;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -19,6 +16,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Teacher {
     @Id
     @Column(name = "teacherId")
@@ -52,12 +50,15 @@ public class Teacher {
     @Column(name = "createdAt")
     private LocalDateTime createdAt;
 
+    @Builder.Default
     @OneToMany(mappedBy = "teacher", fetch = FetchType.LAZY,cascade = CascadeType.PERSIST)
     private List<Subject> subjects = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "teacher", fetch = FetchType.LAZY,cascade = CascadeType.PERSIST)
     private List<Lesson> lessons = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "teacher", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Aclass> aclasses = new ArrayList<>();
 
