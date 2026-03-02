@@ -1,9 +1,11 @@
 package com.schulverwaltung.backend.DTOs;
 
-import com.schulverwaltung.backend.model.Student;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -13,9 +15,11 @@ import java.util.List;
 @Builder
 public class ParentListDto {
     private Long id;
-    private String fullName;
+    private String name;
+    private String surname;
     private String email;
     private String phone;
+    private String address;
     private List<String> studentNames;
-    private LocalDateTime createdAt;
+    private List<Long> studentIds;
 }

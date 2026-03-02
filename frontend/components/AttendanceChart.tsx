@@ -1,46 +1,35 @@
-"use client";
-import Image from "next/image";
+'use client';
+
+import Image from 'next/image';
 import {
   BarChart,
   Bar,
-  Rectangle,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from "recharts";
+} from 'recharts';
 
-const data = [
-  {
-    name: "Mon",
-    present: 60,
-    absent: 40,
-  },
-  {
-    name: "Tue",
-    present: 70,
-    absent: 60,
-  },
-  {
-    name: "Wed",
-    present: 90,
-    absent: 75,
-  },
-  {
-    name: "Thu",
-    present: 90,
-    absent: 75,
-  },
-  {
-    name: "Fri",
-    present: 65,
-    absent: 55,
-  },
-];
+export interface DayAttendance {
+  name: string;
+  present: number;
+  absent: number;
+}
 
-const AttendanceChart = () => {
+interface AttendanceChartProps {
+  data?: DayAttendance[];
+}
+
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+
+const AttendanceChart = ({ data = [] }: AttendanceChartProps) => {
+  const chartData = DAYS.map((day, i) => {
+    const d = data[i];
+    return d ? { ...d, name: day } : { name: day, present: 0, absent: 0 };
+  });
+
   return (
     <div className="bg-white rounded-lg p-4 h-full">
       <div className="flex justify-between items-center">
@@ -48,22 +37,22 @@ const AttendanceChart = () => {
         <Image src="/moreDark.png" alt="" width={20} height={20} />
       </div>
       <ResponsiveContainer width="100%" height="90%">
-        <BarChart width={500} height={300} data={data} barSize={20}>
+        <BarChart width={500} height={300} data={chartData} barSize={20}>
           <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#ddd" />
           <XAxis
             dataKey="name"
             axisLine={false}
-            tick={{ fill: "#d1d5db" }}
+            tick={{ fill: '#d1d5db' }}
             tickLine={false}
           />
-          <YAxis axisLine={false} tick={{ fill: "#d1d5db" }} tickLine={false} />
+          <YAxis axisLine={false} tick={{ fill: '#d1d5db' }} tickLine={false} />
           <Tooltip
-            contentStyle={{ borderRadius: "10px", borderColor: "lightgray" }}
+            contentStyle={{ borderRadius: '10px', borderColor: 'lightgray' }}
           />
           <Legend
             align="left"
             verticalAlign="top"
-            wrapperStyle={{ paddingTop: "20px", paddingBottom: "40px" }}
+            wrapperStyle={{ paddingTop: '20px', paddingBottom: '40px' }}
           />
           <Bar
             dataKey="present"

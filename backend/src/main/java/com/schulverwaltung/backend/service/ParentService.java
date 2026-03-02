@@ -1,11 +1,13 @@
 package com.schulverwaltung.backend.service;
 
+import com.schulverwaltung.backend.DTOs.ParentListDto;
 import com.schulverwaltung.backend.DTOs.RegisterRequestDto;
 import com.schulverwaltung.backend.DTOs.RegisterResponseDto;
 import com.schulverwaltung.backend.enums.Role;
 import com.schulverwaltung.backend.exceptions.EmailAlreadyExistsException;
 import com.schulverwaltung.backend.exceptions.UsernameAlreadyExistsException;
 import com.schulverwaltung.backend.model.Parent;
+import com.schulverwaltung.backend.model.Student;
 import com.schulverwaltung.backend.model.User;
 import com.schulverwaltung.backend.repository.ParentRepository;
 import com.schulverwaltung.backend.repository.UserRepository;
@@ -14,6 +16,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -63,5 +69,34 @@ public class ParentService {
         response.setName(parent.getName());
 
         return response;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ParentListDto> getAllParents() {
+        return parentRepository.findAll().stream()
+                .map(this::toListDto)
+                .collect(Collectors.toList());
+    }
+
+    private ParentListDto toListDto(Parent p) {
+        String email = p.getUser() != null ? p.getUser().getEmail() : "";
+        List<String> studentNames = p.getStudents() != null
+                ? p.getStudents().stream()
+                .map(s -> (s.getName() + " " + (s.getSurname() != null ? s.getSurname() : "")).trim())
+                .collect(Collectors.toList())
+                : List.of();
+        List<Long> studentIds = p.getStudents() != null
+                ? p.getStudents().stream().map(Student::getId).collect(Collectors.toList())
+                : List.of();
+        return ParentListDto.builder()
+                .id(p.getId())
+                .name(p.getName())
+                .surname(p.getSurname())
+                .email(email)
+                .phone(p.getPhone())
+                .address(p.getAddress())
+                .studentNames(studentNames)
+                .studentIds(studentIds)
+                .build();
     }
 }

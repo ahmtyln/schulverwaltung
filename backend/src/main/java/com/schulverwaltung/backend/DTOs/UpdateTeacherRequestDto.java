@@ -11,10 +11,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateTeacherRequestDto {
-    @NotNull
-    private Long id;
     private String name;
     private String surname;
     private String phone;
+    private String email;
+    private String address;
     private List<Long> lessonIds;
 }

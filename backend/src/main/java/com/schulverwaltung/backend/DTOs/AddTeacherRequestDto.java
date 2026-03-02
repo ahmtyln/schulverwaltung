@@ -29,5 +29,7 @@ public class AddTeacherRequestDto {
     @NotBlank
     private String phone;
 
+    private String address;
+
     private List<Long> lessonIds;
 }

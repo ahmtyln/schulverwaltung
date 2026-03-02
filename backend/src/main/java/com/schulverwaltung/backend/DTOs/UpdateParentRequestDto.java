@@ -16,5 +16,6 @@ public class UpdateParentRequestDto {
     private String name;
     private String surname;
     private String phone;
+    private String address;
     private List<Long> studentIds;
 }

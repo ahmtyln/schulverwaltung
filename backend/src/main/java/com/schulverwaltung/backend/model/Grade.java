@@ -1,5 +1,6 @@
 package com.schulverwaltung.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -26,9 +27,11 @@ public class Grade {
     @Column(name = "level",unique = true,nullable = false)
     private int level;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "grade", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Aclass> aclasses = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "grade", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Student> students = new ArrayList<>();
 }

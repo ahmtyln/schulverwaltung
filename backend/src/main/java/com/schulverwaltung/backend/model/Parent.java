@@ -1,5 +1,6 @@
 package com.schulverwaltung.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -40,6 +41,7 @@ public class Parent {
     @Column(name = "createdAt")
     private LocalDateTime createdAt;
 
+    @JsonIgnore
     @Builder.Default
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Student> students = new ArrayList<>();

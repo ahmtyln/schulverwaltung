@@ -22,15 +22,19 @@ public class AddStudentRequestDto {
     @NotBlank
     private String email;
 
-    @NotBlank @Size(min = 6, message = "Password muss mindestens 6 Character sein.")
+    @Size(min = 6, message = "Password muss mindestens 6 Character sein.")
     private String password;
 
-    @NotBlank(message = "PhoneBereich ist erforderlich.")
     private String phone;
 
-    @NotNull(message = "Class muss ausgewählt werden.")
+    private String address;
+
+    private String bloodType;
+
     private String className;
 
-    @NotNull(message = "Grade muss ausgewählt werden.")
-    private int gradeLevel;
+    private Integer gradeLevel;
+
+
+    private Long parentId;
 }

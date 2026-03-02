@@ -141,5 +141,26 @@ body {
 
 
 
+/* Teacher Schedule BigCalendar - Yeni */
+.rbc-events-container .rbc-event {
+  border-radius: 8px !important;
+  padding: 4px 8px !important;
+  margin: 2px !important;
 
+}
+
+.rbc-events-container .rbc-event:hover {
+  transform: scale(1.02) !important;
+  box-shadow: 0 4px 8px rgba(59,130,246,0.4) !important;
+}
+
+/* Time slots daha net */
+.rbc-events-container .rbc-timeslot-group {
+  background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%) !important;
+}
+
+.rbc-events-container .rbc-time-header-cell {
+  background-color: #e2e8f0 !important;
+  font-weight: 600 !important;
+}
 

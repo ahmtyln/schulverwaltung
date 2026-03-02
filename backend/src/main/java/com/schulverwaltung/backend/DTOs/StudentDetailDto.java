@@ -2,22 +2,19 @@ package com.schulverwaltung.backend.DTOs;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
-
-@Getter
-@Setter
-@AllArgsConstructor
+@Data
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class StudentResponseDto {
+public class StudentDetailDto {
     private Long id;
     private String fullName;
+    private String studentId;
     private String email;
     private String phone;
     private String address;
+    private String className;     // Aclass.name
+    private Integer gradeLevel;   // Grade.level
     private String bloodType;
-    private String className;
-    private int gradeLevel;
-    private LocalDateTime createdAt;
-    private ParentSummaryDto parent;
 }
+

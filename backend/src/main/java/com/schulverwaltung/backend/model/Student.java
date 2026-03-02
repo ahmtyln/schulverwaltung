@@ -1,5 +1,6 @@
 package com.schulverwaltung.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.schulverwaltung.backend.enums.UserSex;
 import jakarta.persistence.*;
@@ -33,7 +34,7 @@ public class Student {
     @Column(name = "address")
     private String address;
 
-    @Column(name = "phoneNumber",unique = true)
+    @Column(name = "phoneNumber")
     private String phone;
 
     @Column(name = "image")
@@ -50,21 +51,26 @@ public class Student {
     @Column(name = "createdAt")
     private LocalDateTime createdAt;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parentId")
+    @JoinColumn(name = "parentId", nullable = true)
     private Parent parent;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "classId")
     private Aclass aClass;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gradeId")
     private Grade grade;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "student", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Result> results = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "student", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Attendance> attendances = new ArrayList<>();
 

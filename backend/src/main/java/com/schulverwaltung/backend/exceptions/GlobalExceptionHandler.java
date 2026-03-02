@@ -5,6 +5,7 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -51,6 +52,29 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now()
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponseDto> handleDataIntegrity(DataIntegrityViolationException ex) {
+        String message = ex.getMessage() != null && ex.getMessage().contains("Duplicate entry")
+                ? "This value is already in use (e.g. phone number). Please use a different one."
+                : "Data constraint violation. Check that values are unique where required.";
+        ErrorResponseDto error = new ErrorResponseDto(
+                "CONFLICT",
+                message,
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(org.hibernate.LazyInitializationException.class)
+    public ResponseEntity<ErrorResponseDto> handleLazyInit(org.hibernate.LazyInitializationException ex) {
+        ErrorResponseDto error = new ErrorResponseDto(
+                "SERVER_ERROR",
+                "A temporary error occurred. Please try again.",
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
     @ExceptionHandler(RuntimeException.class)

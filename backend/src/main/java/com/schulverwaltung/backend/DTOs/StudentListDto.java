@@ -12,9 +12,11 @@ import java.time.LocalDateTime;
 public class StudentListDto {
     private Long id;
     private String fullName;
+    private String studentId;
     private String email;
     private String phone;
+    private String address;
     private int grade;
     private String className;
-    private LocalDateTime createdAt;
+    private String sex; // MALE, FEMALE for dashboard stats
 }

@@ -208,20 +208,32 @@ public class AdminService {
 
         teacherRepository.save(teacher);
 
+        List<TeacherResponseDto.IdName> lessonDtos = teacher.getLessons().stream()
+                .map(l -> new TeacherResponseDto.IdName(l.getId(), l.getName()))
+                .toList();
         return TeacherResponseDto.builder()
                 .id(teacher.getId())
-                .fullName(teacher.getName() + " " + teacher.getSurname())
-                .email(user.getEmail())
+                .name(teacher.getName())
+                .surname(teacher.getSurname() != null ? teacher.getSurname() : "")
+                .address(teacher.getAddress() != null ? teacher.getAddress() : "")
                 .phone(teacher.getPhone())
-                .lessons(teacher.getLessons().stream().map(Lesson::getName).toList())
+                .image(teacher.getImage())
+                .bloodType(teacher.getBloodType())
+                .sex(teacher.getSex())
+                .createdAt(teacher.getCreatedAt())
+                .user(TeacherResponseDto.UserSummary.builder()
+                        .id(user.getId())
+                        .username(user.getUsername())
+                        .email(user.getEmail())
+                        .build())
+                .subjects(List.of())
+                .lessons(lessonDtos)
+                .aclasses(List.of())
                 .build();
     }
 
     public TeacherResponseDto updateTeacher(Long id, UpdateTeacherRequestDto request){
-        if (!id.equals(request.getId())) {
-            throw new RuntimeException("Path ID ≠ Body ID!");
-        }
-        Teacher teacher = teacherRepository.findById(request.getId())
+        Teacher teacher = teacherRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Teacher ist nicht gefunden."));
 
         if (request.getName() != null) teacher.setName(request.getName());
@@ -237,12 +249,28 @@ public class AdminService {
 
         teacherRepository.save(teacher);
 
+        List<TeacherResponseDto.IdName> lessonDtos = teacher.getLessons().stream()
+                .map(l -> new TeacherResponseDto.IdName(l.getId(), l.getName()))
+                .toList();
+        var u = teacher.getUser();
         return TeacherResponseDto.builder()
                 .id(teacher.getId())
-                .fullName(teacher.getName() + " " + teacher.getSurname())
-                .email(teacher.getUser().getEmail())
+                .name(teacher.getName())
+                .surname(teacher.getSurname() != null ? teacher.getSurname() : "")
+                .address(teacher.getAddress() != null ? teacher.getAddress() : "")
                 .phone(teacher.getPhone())
-                .lessons(teacher.getLessons().stream().map(Lesson::getName).toList())
+                .image(teacher.getImage())
+                .bloodType(teacher.getBloodType())
+                .sex(teacher.getSex())
+                .createdAt(teacher.getCreatedAt())
+                .user(u != null ? TeacherResponseDto.UserSummary.builder()
+                        .id(u.getId())
+                        .username(u.getUsername())
+                        .email(u.getEmail())
+                        .build() : null)
+                .subjects(List.of())
+                .lessons(lessonDtos)
+                .aclasses(List.of())
                 .build();
     }
 
@@ -268,15 +296,18 @@ public class AdminService {
                 .name(request.getName())
                 .surname(request.getSurname())
                 .phone(request.getPhone())
+                .address(request.getAddress())
                 .user(user)
                 .build();
 
+        parentRepository.save(parent);
         if(request.getStudentIds()!= null && !request.getStudentIds().isEmpty()){
             List<Student> students = studentRepository.findAllById(request.getStudentIds());
-            parent.setStudents(students);
+            for (Student s : students) {
+                s.setParent(parent);
+                studentRepository.save(s);
+            }
         }
-
-        parentRepository.save(parent);
 
         return ParentResponseDto.builder()
                 .id(parent.getId())
@@ -305,10 +336,23 @@ public class AdminService {
         if(request.getPhone()!=null){
             parent.setPhone(request.getPhone());
         }
+        if(request.getAddress() != null){
+            parent.setAddress(request.getAddress());
+        }
 
         if(request.getStudentIds() != null){
+            List<Student> oldStudents = parent.getStudents();
+            if (oldStudents != null) {
+                for (Student s : oldStudents) {
+                    s.setParent(null);
+                    studentRepository.save(s);
+                }
+            }
             List<Student> students = studentRepository.findAllById(request.getStudentIds());
-            parent.setStudents(students);
+            for (Student s : students) {
+                s.setParent(parent);
+                studentRepository.save(s);
+            }
         }
 
         parentRepository.save(parent);

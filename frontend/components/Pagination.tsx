@@ -1,26 +1,53 @@
-import React from 'react'
+import React from 'react';
 
-const Pagination = () => {
+interface PaginationProps {
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+}
+
+const Pagination = ({ currentPage = 1, totalPages = 1, onPageChange = () => {} }: PaginationProps) => {
+  if (totalPages <= 1) return null;
+
   return (
-     <div className="p-4 flex items-center justify-between text-gray-500">
+    <div className="p-4 mx-8 my-5 flex items-center justify-around text-gray-500  rounded-lg">
       <button
-        disabled
-        className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="py-2 px-4  rounded-md bg-white hover:bg-gray-100 text-sm font-medium border disabled:opacity-50"
       >
         Prev
       </button>
-      <div className="flex items-center gap-2 text-sm">
-        <button className="px-2 rounded-sm bg-sky">1</button>
-        <button className="px-2 rounded-sm ">2</button>
-        <button className="px-2 rounded-sm ">3</button>
-        ...
-        <button className="px-2 rounded-sm ">10</button>
-      </div>
-      <button className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+
+      {/* Pages */}
+      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+        const pageNum = currentPage + i - 1;
+        if (pageNum < 1 || pageNum > totalPages) return null;
+        
+        return (
+          <button
+            key={pageNum}
+            onClick={() => onPageChange(pageNum)}
+            className={`px-3 py-1 rounded-sm font-medium ${
+              currentPage === pageNum 
+                ? "bg-blue-500 text-white" 
+                : "hover:bg-gray-200 text-gray-700"
+            }`}
+          >
+            {pageNum}
+          </button>
+        );
+      })}
+
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="py-2 px-4 rounded-md bg-white hover:bg-gray-100 text-sm font-medium border disabled:opacity-50"
+      >
         Next
       </button>
     </div>
-  )
-}
+  );
+};
 
-export default Pagination
+export default Pagination;

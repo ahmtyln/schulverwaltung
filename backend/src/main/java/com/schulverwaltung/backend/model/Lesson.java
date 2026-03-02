@@ -1,5 +1,6 @@
 package com.schulverwaltung.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.schulverwaltung.backend.enums.Day;
 import jakarta.persistence.*;
@@ -43,16 +44,20 @@ public class Lesson {
     @JoinColumn(name = "classId", referencedColumnName = "classId")
     private Aclass aClass;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacherId")
     private Teacher teacher;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "lesson", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Exam> exams = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "lesson", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Assignment> assignments = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "lesson", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Attendance> attendances = new ArrayList<>();
 

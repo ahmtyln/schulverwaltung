@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import React from 'react'
+import React from "react";
+import { useRole } from "@/lib/auth";
 const menuItems = [
   {
     title: "MENU",
@@ -9,85 +12,85 @@ const menuItems = [
         icon: "/home.png",
         label: "Home",
         href: "/",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ['ADMIN' , 'TEACHER' , 'STUDENT' , 'PARENT'],
       },
       {
         icon: "/teacher.png",
         label: "Teachers",
         href: "/list/teachers",
-        visible: ["admin", "teacher"],
+        visible: ['ADMIN' , 'TEACHER'],
       },
       {
         icon: "/student.png",
         label: "Students",
         href: "/list/students",
-        visible: ["admin", "teacher"],
+        visible: ['ADMIN' , 'TEACHER'],
       },
       {
         icon: "/parent.png",
         label: "Parents",
         href: "/list/parents",
-        visible: ["admin", "teacher"],
+        visible: ['ADMIN' , 'TEACHER'],
       },
       {
         icon: "/subject.png",
         label: "Subjects",
         href: "/list/subjects",
-        visible: ["admin"],
+        visible: ['ADMIN'],
       },
       {
         icon: "/class.png",
         label: "Classes",
         href: "/list/classes",
-        visible: ["admin", "teacher"],
+        visible: ['ADMIN' , 'TEACHER'],
       },
       {
         icon: "/lesson.png",
         label: "Lessons",
         href: "/list/lessons",
-        visible: ["admin", "teacher"],
+        visible: ['ADMIN' , 'TEACHER'],
       },
       {
         icon: "/exam.png",
         label: "Exams",
         href: "/list/exams",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ['ADMIN' , 'TEACHER' , 'STUDENT' , 'PARENT'],
       },
       {
         icon: "/assignment.png",
         label: "Assignments",
         href: "/list/assignments",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ['ADMIN' , 'TEACHER' , 'STUDENT' , 'PARENT'],
       },
       {
         icon: "/result.png",
         label: "Results",
         href: "/list/results",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ['ADMIN' , 'TEACHER' , 'STUDENT' , 'PARENT'],
       },
       {
         icon: "/attendance.png",
         label: "Attendance",
         href: "/list/attendance",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ['ADMIN' , 'TEACHER' , 'STUDENT' , 'PARENT'],
       },
       {
         icon: "/calendar.png",
         label: "Events",
         href: "/list/events",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ['ADMIN' , 'TEACHER' , 'STUDENT' , 'PARENT'],
       },
       {
         icon: "/message.png",
         label: "Messages",
         href: "/list/messages",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ['ADMIN' , 'TEACHER' , 'STUDENT' , 'PARENT'],
       },
       {
         icon: "/announcement.png",
         label: "Announcements",
         href: "/list/announcements",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ['ADMIN' , 'TEACHER' , 'STUDENT' , 'PARENT'],
       },
     ],
   },
@@ -98,19 +101,19 @@ const menuItems = [
         icon: "/profile.png",
         label: "Profile",
         href: "/profile",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ['ADMIN' , 'TEACHER' , 'STUDENT' , 'PARENT'],
       },
       {
         icon: "/setting.png",
         label: "Settings",
         href: "/settings",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ['ADMIN' , 'TEACHER' , 'STUDENT' , 'PARENT'],
       },
       {
         icon: "/logout.png",
         label: "Logout",
         href: "/logout",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ['ADMIN' , 'TEACHER' , 'STUDENT' , 'PARENT'],
       },
     ],
   },
@@ -118,21 +121,34 @@ const menuItems = [
 
 
 const Menu = () => {
+  const role = useRole();
+
   return (
-    <div className=" mt-4 text-sm">
-        {menuItems.map(i =>(
-            <div className="flex flex-col gap-2" key={i.title}>
-                <span className="hidden lg:block text-gray-400 font-light my-4">{i.title}</span>
-                {i.items.map(item =>(
-                    <Link className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-gray-100" href={item.href} key={item.label}>
-                        <Image src={item.icon} alt="" width={20} height={20} />
-                        <span className="hidden lg:block">{item.label}</span>
-                    </Link>
-                ))}
-            </div>
-        ))}
+    <div className="text-sm">
+      {menuItems.map((section) => (
+        <div key={section.title} className="flex flex-col gap-2">
+          <span className="hidden lg:block text-gray-400 font-light my-4">
+            {section.title}
+          </span>
+          {section.items
+            .filter((item) => role && item.visible.includes(role))
+            .map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-gray-100 transition-all"
+              >
+                <Image src={item.icon} alt="" width={20} height={20} />
+                <span className="hidden lg:block">{item.label}</span>
+              </Link>
+            ))}
+        </div>
+      ))}
+      {role === null && (
+        <p className="hidden lg:block text-gray-400 text-xs mt-4">Loading menu...</p>
+      )}
     </div>
-  )
-}
+  );
+};
 
 export default Menu
