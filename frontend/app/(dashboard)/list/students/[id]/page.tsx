@@ -2,27 +2,37 @@
 import Announcements from "@/components/Announcement";
 import BigCalendar from "@/components/BigCalendar";
 import FormModal from "@/components/FormModal";
-import Performance from "@/components/Performance";
-import { role } from "@/lib/data";
+import StudentLoadChart from "@/components/StudentLoadChart";
+import { useRole } from "@/lib/auth";
 import Image from "next/image";
-import Link from "next/link";
-import { fetchStudentById, fetchStudentSchedule } from "@/lib/api";  // ← Student API
-import { StudentDetail } from "@/lib/api";  // ← StudentDetailDto
+import {
+  fetchStudentById,
+  fetchStudentSchedule,
+  fetchAttendances,
+  fetchAssignments,
+  fetchExams,
+  fetchResults,
+} from "@/lib/api";
+import type { StudentDetail } from "@/lib/api";
 import { notFound, useParams } from "next/navigation";
 import { useState, useEffect } from 'react';
 
 const SingleStudentPage = () => {
   const params = useParams();
-  const [student, setStudent] = useState<StudentDetail | null>(null);  // ← StudentDetail
+  const role = useRole();
+  const [student, setStudent] = useState<StudentDetail | null>(null);
   const [scheduleEvents, setScheduleEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [assignmentsCount, setAssignmentsCount] = useState(0);
+  const [examsCount, setExamsCount] = useState(0);
+  const [resultsCount, setResultsCount] = useState(0);
+  const [attendancePercent, setAttendancePercent] = useState<number | null>(null);
 
   const studentId = Number(params.id);
 
   useEffect(() => {
     if (Number.isNaN(studentId) || studentId <= 0) return;
 
-    // Student fetch
     fetchStudentById(studentId)
       .then((data) => {
         setStudent(data);
@@ -33,8 +43,7 @@ const SingleStudentPage = () => {
         notFound();
       });
 
-    // SCHEDULE EVENTS
-    fetchStudentSchedule(studentId)  // ← Backend gelecek
+    fetchStudentSchedule(studentId)
       .then(data => {
         const events = data.map((lesson: any) => ({
           id: lesson.lessonId,
@@ -46,6 +55,23 @@ const SingleStudentPage = () => {
         setScheduleEvents(events);
       })
       .catch(console.error);
+
+    Promise.all([
+      fetchAttendances({ studentId }),
+      fetchAssignments({ studentId }),
+      fetchExams({ studentId }),
+      fetchResults({ studentId }),
+    ]).then(([attendances, assignments, exams, results]) => {
+      setAssignmentsCount(Array.isArray(assignments) ? assignments.length : 0);
+      setExamsCount(Array.isArray(exams) ? exams.length : 0);
+      setResultsCount(Array.isArray(results) ? results.length : 0);
+      if (Array.isArray(attendances) && attendances.length > 0) {
+        const present = attendances.filter((a: { present?: boolean }) => a.present).length;
+        setAttendancePercent(Math.round((present / attendances.length) * 100));
+      } else {
+        setAttendancePercent(null);
+      }
+    }).catch(console.error);
   }, [studentId]);
 
   if (loading) return <div className="p-8">Loading...</div>;
@@ -70,7 +96,7 @@ const SingleStudentPage = () => {
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">{student.fullName}</h1>
-                {role === "admin" && (
+                {role === "ADMIN" && (
                   <FormModal
                     table="student"
                     type="update"
@@ -81,6 +107,7 @@ const SingleStudentPage = () => {
                       email: student.email,
                       phone: student.phone,
                       address: student.address,
+                      bloodType: student.bloodType
                     }}
                   />
                 )}
@@ -109,36 +136,34 @@ const SingleStudentPage = () => {
             </div>
           </div>
 
-          {/* SMALL CARDS - Student stats */}
+          {/* SMALL CARDS - Student stats (dynamic) */}
           <div className="flex-1 flex gap-4 justify-between flex-wrap">
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%]">
+            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
               <Image src="/singleAttendance.png" alt="" width={24} height={24} className="w-6 h-6" />
               <div>
-                <h1 className="text-xl font-semibold">90%</h1>
+                <h1 className="text-xl font-semibold">{attendancePercent != null ? `${attendancePercent}%` : "—"}</h1>
                 <span className="text-sm text-gray-400">Attendance</span>
               </div>
             </div>
             <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
               <Image src="/singleBranch.png" alt="" width={24} height={24} className="w-6 h-6" />
               <div>
-                <h1 className="text-xl font-semibold">2</h1>
-                <span className="text-sm text-gray-400">Classes</span>
+                <h1 className="text-xl font-semibold">{assignmentsCount}</h1>
+                <span className="text-sm text-gray-400">Assignments</span>
               </div>
             </div>
-
             <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
               <Image src="/singleLesson.png" alt="" width={24} height={24} className="w-6 h-6" />
               <div>
-                <h1 className="text-xl font-semibold">6</h1>
-                <span className="text-sm text-gray-400">Lessons</span>
+                <h1 className="text-xl font-semibold">{examsCount}</h1>
+                <span className="text-sm text-gray-400">Exams</span>
               </div>
             </div>
-
             <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
               <Image src="/singleClass.png" alt="" width={24} height={24} className="w-6 h-6" />
               <div>
-                <h1 className="text-xl font-semibold">6</h1>
-                <span className="text-sm text-gray-400">Classes</span>
+                <h1 className="text-xl font-semibold">{resultsCount}</h1>
+                <span className="text-sm text-gray-400">Results</span>
               </div>
             </div>
           </div>
@@ -151,10 +176,16 @@ const SingleStudentPage = () => {
         </div>
       </div>
 
-      {/* RIGHT - Shortcuts + Performance + Announcements AYNEN! */}
+      {/* RIGHT - Student load chart + Announcements */}
       <div className="w-full xl:w-1/3 flex flex-col gap-4">
-        {/* Shortcuts: Student's Lessons, Exams... */}
-        <Performance />
+        <StudentLoadChart
+          stats={{
+            assignmentsCount,
+            examsCount,
+            resultsCount,
+            attendancePercent,
+          }}
+        />
         <Announcements />
       </div>
     </div>

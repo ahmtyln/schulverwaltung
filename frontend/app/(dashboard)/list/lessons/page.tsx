@@ -4,7 +4,7 @@ import FormModal from '@/components/FormModal';
 import Pagination from '@/components/Pagination';
 import Table from '@/components/Table';
 import TableSearch from '@/components/TableSearch';
-import { fetchLessons, type LessonListItem } from '@/lib/api';
+import { fetchLessons, fetchMe, type LessonListItem, type MeDto } from '@/lib/api';
 import { useRole } from '@/lib/auth';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -20,19 +20,30 @@ const columns = [
 
 const ITEMS_PER_PAGE = 10;
 
+type SortOrder = 'asc' | 'desc' | null;
+
 const LessonListPage = () => {
   const role = useRole();
+  const [me, setMe] = useState<MeDto | null>(null);
   const [lessons, setLessons] = useState<LessonListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const isTeacher = role === 'TEACHER';
+  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
 
   useEffect(() => {
-    fetchLessons()
+    if (isTeacher) fetchMe().then(setMe).catch(() => {});
+  }, [isTeacher]);
+
+  useEffect(() => {
+    if (isTeacher && me == null) return;
+    const params = isTeacher && me?.teacherId != null ? { teacherId: me.teacherId } : undefined;
+    fetchLessons(params)
       .then(setLessons)
       .catch(() => setLessons([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [isTeacher, me?.teacherId]);
 
   const formatTime = (start?: string, end?: string) => {
     if (!start || !end) return "—";
@@ -58,6 +69,19 @@ const LessonListPage = () => {
       l.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortOrder === null) return 0;
+    const aKey = `${a.subjectName || a.name || ''} ${a.className || ''}`.toLowerCase();
+    const bKey = `${b.subjectName || b.name || ''} ${b.className || ''}`.toLowerCase();
+    const cmp = aKey.localeCompare(bKey);
+    return sortOrder === 'asc' ? cmp : -cmp;
+  });
+
+  const toggleSort = () => {
+    setSortOrder(prev => (prev === null ? 'asc' : prev === 'asc' ? 'desc' : null));
+    setCurrentPage(1);
+  };
+
   const renderRow = (item: LessonListItem) => (
     <tr
       key={item.id}
@@ -70,12 +94,12 @@ const LessonListPage = () => {
       <td className="hidden lg:table-cell">{formatTime(item.startTime, item.endTime)}</td>
       <td>
         <div className="flex items-center gap-2">
-          {(role === "ADMIN" || role === "TEACHER") && (
-            <>
-              <FormModal table="lesson" type="update" data={item} />
+          {role === "ADMIN" && (
               <FormModal table="lesson" type="delete" id={item.id} />
-            </>
-          )}
+            )}
+            {(role === "ADMIN" || role === "TEACHER") && (
+              <FormModal table="lesson" type="update" data={item} />
+            )}
         </div>
       </td>
     </tr>
@@ -92,17 +116,25 @@ const LessonListPage = () => {
   return (
     <div className="bg-white p-4 rounded-md flex-1">
       <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Lessons</h1>
+        <h1 className="hidden md:block text-lg font-semibold">{isTeacher ? 'My Lessons' : 'All Lessons'}</h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch onSearch={setSearchTerm} />
           <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-yellow">
-              <Image src="/filter.png" alt="" width={20} height={20} />
+            <button
+              type="button"
+              onClick={toggleSort}
+              className={`w-8 h-8 flex items-center justify-center rounded-full bg-yellow ${sortOrder ? 'ring-2 ring-blue-400' : ''}`}
+              title={
+                sortOrder === null
+                  ? 'Sort by subject/class'
+                  : sortOrder === 'asc'
+                  ? 'A→Z (click for Z→A)'
+                  : 'Z→A (click to clear)'
+              }
+            >
+              <Image src="/sort.png" alt="Sort" width={20} height={20} />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-yellow">
-              <Image src="/sort.png" alt="" width={20} height={20} />
-            </button>
-            {(role === 'ADMIN' || role === 'TEACHER') && (
+            {role === 'ADMIN' && (
               <FormModal table="lesson" type="create" />
             )}
           </div>
@@ -111,11 +143,11 @@ const LessonListPage = () => {
       <Table
         columns={columns}
         renderRow={renderRow}
-        data={filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)}
+        data={sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)}
       />
       <Pagination
         currentPage={currentPage}
-        totalPages={Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))}
+        totalPages={Math.max(1, Math.ceil(sorted.length / ITEMS_PER_PAGE))}
         onPageChange={setCurrentPage}
       />
     </div>

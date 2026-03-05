@@ -20,10 +20,12 @@ public class StudentListMapper {
         return StudentListDto.builder()
                 .id(student.getId())
                 .fullName(student.getName() + " " + (student.getSurname() != null ? student.getSurname() : ""))
+                .studentId("S" + String.format("%03d", student.getId()))
                 .email(email)
                 .grade(grade)
                 .className(className)
                 .phone(student.getPhone())
+                .address(student.getAddress() != null ? student.getAddress() : "")
                 .sex(sex)
                 .build();
     }

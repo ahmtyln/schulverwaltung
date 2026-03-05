@@ -19,7 +19,11 @@ public class ParentController {
     private final ParentService parentService;
 
     @GetMapping
-    public ResponseEntity<List<ParentListDto>> getAllParents() {
+    public ResponseEntity<List<ParentListDto>> getAllParents(
+            @RequestParam(required = false) Long teacherId) {
+        if (teacherId != null) {
+            return ResponseEntity.ok(parentService.getParentsByTeacherId(teacherId));
+        }
         return ResponseEntity.ok(parentService.getAllParents());
     }
 

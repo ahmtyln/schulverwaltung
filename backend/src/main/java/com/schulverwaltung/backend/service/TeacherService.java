@@ -146,6 +146,7 @@ public class TeacherService {
                 .surname(request.getSurname())
                 .phone(request.getPhone())
                 .address(request.getAddress() != null ? request.getAddress() : "")
+                .bloodType(request.getBloodType())
                 .user(user)
                 .build();
 
@@ -197,6 +198,9 @@ public class TeacherService {
         teacher.setPhone(request.getPhone());
         if (request.getAddress() != null) {
             teacher.setAddress(request.getAddress());
+        }
+        if (request.getBloodType() != null) {
+            teacher.setBloodType(request.getBloodType());
         }
 
         if (request.getLessonIds() != null) {

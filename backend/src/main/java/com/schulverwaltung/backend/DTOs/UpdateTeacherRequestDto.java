@@ -16,5 +16,6 @@ public class UpdateTeacherRequestDto {
     private String phone;
     private String email;
     private String address;
+    private String bloodType;
     private List<Long> lessonIds;
 }

@@ -3,7 +3,7 @@ import FormModal from '@/components/FormModal';
 import Pagination from '@/components/Pagination'
 import Table from '@/components/Table';
 import TableSearch from '@/components/TableSearch'
-import { fetchStudents, Student } from '@/lib/api';
+import { fetchStudents, fetchMe, Student, type MeDto } from '@/lib/api';
 import { useRole } from '@/lib/auth';
 import Image from 'next/image'
 import Link from 'next/link';
@@ -41,21 +41,36 @@ const columns = [
     accessor: "action",
   },
 ];
+type SortOrder = 'asc' | 'desc' | null;
+
 const StudentListPage = () => {
   const role = useRole();
-  const [sortConfig, setSortConfig] = useState<{ key: keyof Student; direction: 'asc' | 'desc' } | null>(null);
+  const [me, setMe] = useState<MeDto | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const studentsPerPage = 3;
-  const isAdmin = role === 'ADMIN' || role === 'TEACHER';
+  const studentsPerPage = 8;
+  const canManageStudents = role === 'ADMIN'; // only admin can add/delete students
+  const isTeacher = role === 'TEACHER';
+  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
 
   useEffect(() => {
+    if (isTeacher) fetchMe().then(setMe).catch(() => {});
+  }, [isTeacher]);
+
+  useEffect(() => {
+    if (isTeacher && me == null) return;
+    if (isTeacher && me != null && me.teacherId == null) {
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
     const loadStudents = async () => {
       try {
         setLoading(true);
-        const data = await fetchStudents();
+        const params = isTeacher && me?.teacherId != null ? { teacherId: me.teacherId } : undefined;
+        const data = await fetchStudents(params);
         setStudents(data);
       } catch (error) {
         console.error('Students load error:', error);
@@ -64,21 +79,15 @@ const StudentListPage = () => {
       }
     };
     loadStudents();
-  }, []);
+  }, [isTeacher, me?.teacherId]);
 
-  // EKLE → search + sort değişince page=1
+  // search + sort değişince page=1
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, sortConfig]);
+  }, [searchTerm, sortOrder]);
 
-
-  const handleSort = (key: keyof Student) => {
-    setSortConfig(prev => {
-      if (prev?.key === key) {
-        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
-      }
-      return { key, direction: 'asc' };
-    });
+  const toggleSort = () => {
+    setSortOrder(prev => (prev === null ? 'asc' : prev === 'asc' ? 'desc' : null));
   };
 
   const filteredStudents = students.filter(student => {
@@ -89,12 +98,11 @@ const StudentListPage = () => {
   });
 
   const sortedStudents = filteredStudents.slice().sort((a, b) => {
-    if (!sortConfig) return 0;
-    const aVal = String(a[sortConfig.key] || '');
-    const bVal = String(b[sortConfig.key] || '');
-    return sortConfig.direction === 'asc'
-      ? aVal.localeCompare(bVal)
-      : bVal.localeCompare(aVal);
+    if (sortOrder === null) return 0;
+    const aKey = (a.fullName || a.name || '').toLowerCase();
+    const bKey = (b.fullName || b.name || '').toLowerCase();
+    const cmp = aKey.localeCompare(bKey);
+    return sortOrder === 'asc' ? cmp : -cmp;
   });
 
   const indexOfLast = currentPage * studentsPerPage;
@@ -118,25 +126,25 @@ const StudentListPage = () => {
         <div className="flex items-center gap-2">
 
           <Link href={`/list/students/${item.id}`}>
-            <button className='w-7 h-7 flex items-center justify-center rounded-full bg-sky'>
+            <button className='w-7 h-7 flex items-center justify-center rounded-full bg-sky hover:cursor-pointer'>
               <Image src="/view.png" alt='view' width={16} height={16} />
             </button>
           </Link>
 
-          {isAdmin && <FormModal table='student' type='delete' id={item.id} />}
+          {canManageStudents && <FormModal table='student' type='delete' id={item.id} />}
         </div>
       </td>
     </tr>
 
   )
 
-  if (students.length === 0) {
+  if (!loading && students.length === 0) {
     return (
       <div className="bg-white p-12 rounded-md text-center flex flex-col items-center gap-6">
         <div className="text-4xl">👨‍🎓</div>
         <h1 className="text-2xl font-semibold">There are no students yet.</h1>
         <p className="text-gray-500 max-w-md">Start by adding the first student...</p>
-        {isAdmin && <FormModal table="student" type="create" />}
+        {canManageStudents && <FormModal table="student" type="create" />}
       </div>
     );
   }
@@ -147,17 +155,25 @@ const StudentListPage = () => {
     <div className='bg-white p-4 rounded-md flex-1'>
       {/* TOP */}
       <div className='flex items-center justify-between'>
-        <h1 className='hidden md:block text-lg font-semibold'>All Students</h1>
+        <h1 className='hidden md:block text-lg font-semibold'>{isTeacher ? 'My Students' : 'All Students'}</h1>
         <div className='flex flex-col md:flex-row items-center gap-4 w-full md:w-auto'>
           <TableSearch onSearch={setSearchTerm} />
           <div className='flex items-center gap-4 self-end'>
-            <button className='w-8 h-8 flex items-center justify-center rounded-full bg-yellow'>
-              <Image src="/filter.png" alt='' width={20} height={20} />
+            <button
+              type="button"
+              onClick={toggleSort}
+              className={`w-8 h-8 flex items-center justify-center rounded-full bg-yellow ${sortOrder ? 'ring-2 ring-blue-400' : ''}`}
+              title={
+                sortOrder === null
+                  ? 'Sort by name'
+                  : sortOrder === 'asc'
+                  ? 'A→Z (click for Z→A)'
+                  : 'Z→A (click to clear)'
+              }
+            >
+              <Image src="/sort.png" alt='Sort' width={20} height={20} />
             </button>
-            <button onClick={() => handleSort('fullName')} className='w-8 h-8 flex items-center justify-center rounded-full bg-yellow'>
-              <Image src="/sort.png" alt='' width={20} height={20} />
-            </button>
-            {isAdmin && (<FormModal table='student' type='create' />)}
+            {canManageStudents && (<FormModal table='student' type='create' />)}
           </div>
         </div>
       </div>

@@ -7,8 +7,10 @@ import com.schulverwaltung.backend.exceptions.UsernameAlreadyExistsException;
 import com.schulverwaltung.backend.mapper.LessonMapper;
 import com.schulverwaltung.backend.mapper.StudentListMapper;
 import com.schulverwaltung.backend.model.Aclass;
+import com.schulverwaltung.backend.model.Lesson;
 import com.schulverwaltung.backend.model.Parent;
 import com.schulverwaltung.backend.model.Student;
+import com.schulverwaltung.backend.model.Teacher;
 import com.schulverwaltung.backend.model.User;
 import com.schulverwaltung.backend.repository.AttendanceRepository;
 import com.schulverwaltung.backend.repository.ClassRepository;
@@ -16,6 +18,7 @@ import com.schulverwaltung.backend.repository.LessonRepository;
 import com.schulverwaltung.backend.repository.ParentRepository;
 import com.schulverwaltung.backend.repository.ResultRepository;
 import com.schulverwaltung.backend.repository.StudentRepository;
+import com.schulverwaltung.backend.repository.TeacherRepository;
 import com.schulverwaltung.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -24,7 +27,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -39,6 +45,7 @@ public class StudentService {
     private final PasswordEncoder passwordEncoder;
     private final ClassRepository classRepository;
     private final ParentRepository parentRepository;
+    private final TeacherRepository teacherRepository;
     private final StudentListMapper studentMapper;
     private final LessonMapper lessonMapper;
 
@@ -92,18 +99,25 @@ public class StudentService {
     @Transactional(readOnly = true)
     public List<StudentListDto> getAllStudents() {
         return studentRepository.findAll().stream()
-                .map(student -> StudentListDto.builder()
-                        .id(student.getId())
-                        .fullName(student.getName() + " " + student.getSurname())
-                        .studentId("S" + String.format("%03d", student.getId()))
-                        .email(student.getUser().getEmail())
-                        .phone(student.getPhone())
-                        .address(student.getAddress() != null ? student.getAddress() : "")
-                        .className(student.getAClass() != null ? student.getAClass().getName() : "10A")
-                        .grade(student.getGrade() != null ? student.getGrade().getLevel() : 0)
-                        .build()
-                )
+                .map(studentMapper::toStudentListDto)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<StudentListDto> getStudentsByTeacherId(Long teacherId) {
+        if (teacherId == null) return List.of();
+        Teacher t = teacherRepository.findById(teacherId).orElse(null);
+        if (t == null) return List.of();
+        Set<Long> classIds = new HashSet<>();
+        for (Lesson l : t.getLessons()) {
+            if (l.getAClass() != null && l.getAClass().getId() != null) classIds.add(l.getAClass().getId());
+        }
+        for (Aclass c : t.getAclasses()) {
+            if (c.getId() != null) classIds.add(c.getId());
+        }
+        if (classIds.isEmpty()) return List.of();
+        List<Student> students = studentRepository.findByAClass_IdIn(new ArrayList<>(classIds));
+        return students.stream().map(studentMapper::toStudentListDto).collect(Collectors.toList());
     }
 
 

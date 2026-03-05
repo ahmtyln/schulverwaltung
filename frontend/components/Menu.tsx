@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRole } from "@/lib/auth";
+import { fetchAnnouncements, fetchMe, fetchParentMessages, fetchTeacherMessages, type MeDto } from "@/lib/api";
 const menuItems = [
   {
     title: "MENU",
@@ -18,7 +19,7 @@ const menuItems = [
         icon: "/teacher.png",
         label: "Teachers",
         href: "/list/teachers",
-        visible: ['ADMIN' , 'TEACHER'],
+        visible: ['ADMIN'],
       },
       {
         icon: "/student.png",
@@ -122,6 +123,79 @@ const menuItems = [
 
 const Menu = () => {
   const role = useRole();
+  const [me, setMe] = useState<MeDto | null>(null);
+  const [messageCount, setMessageCount] = useState(0);
+  const [announcementCount, setAnnouncementCount] = useState(0);
+
+  // Me for role-based announcement count (TEACHER, STUDENT, PARENT)
+  useEffect(() => {
+    if (!role || role === "ADMIN") return;
+    fetchMe().then(setMe).catch(() => setMe(null));
+  }, [role]);
+
+  const refreshMessageCount = async () => {
+    if (!role) return;
+    try {
+      if (role === "TEACHER") {
+        const msgs = await fetchTeacherMessages();
+        setMessageCount(msgs.length);
+      } else if (role === "PARENT") {
+        const msgs = await fetchParentMessages();
+        setMessageCount(msgs.length);
+      } else {
+        setMessageCount(0);
+      }
+    } catch {
+      setMessageCount(0);
+    }
+  };
+
+  useEffect(() => {
+    if (!role) return;
+
+    const load = async () => {
+      // Announcements: role göre filtreli sayı (liste sayfasıyla aynı mantık)
+      try {
+        if (role === "ADMIN") {
+          const anns = await fetchAnnouncements();
+          setAnnouncementCount(anns.length);
+        } else if (role === "TEACHER" && me?.teacherId != null) {
+          const anns = await fetchAnnouncements({ teacherId: me.teacherId });
+          setAnnouncementCount(anns.length);
+        } else if (role === "STUDENT" && me != null) {
+          if (me.classId != null) {
+            const anns = await fetchAnnouncements({ classId: me.classId });
+            setAnnouncementCount(anns.length);
+          } else if (me.studentId != null) {
+            const anns = await fetchAnnouncements({ studentId: me.studentId });
+            setAnnouncementCount(anns.length);
+          } else {
+            setAnnouncementCount(0);
+          }
+        } else if (role === "PARENT" && me?.studentSummaries?.length) {
+          const first = me.studentSummaries[0];
+          const params = first.classId != null ? { classId: first.classId } : { studentId: first.id };
+          const anns = await fetchAnnouncements(params);
+          setAnnouncementCount(anns.length);
+        } else if (role === "TEACHER" || role === "STUDENT" || role === "PARENT") {
+          setAnnouncementCount(0);
+        }
+      } catch {
+        setAnnouncementCount(0);
+      }
+
+      await refreshMessageCount();
+    };
+
+    load();
+  }, [role, me?.teacherId, me?.studentId, me?.classId, me?.studentSummaries]);
+
+  // Mesaj silindiğinde navbar sayacını güncelle
+  useEffect(() => {
+    const onMessagesUpdated = () => refreshMessageCount();
+    window.addEventListener("messages-updated", onMessagesUpdated);
+    return () => window.removeEventListener("messages-updated", onMessagesUpdated);
+  }, [role]);
 
   return (
     <div className="text-sm">
@@ -138,7 +212,19 @@ const Menu = () => {
                 href={item.href}
                 className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-gray-100 transition-all"
               >
-                <Image src={item.icon} alt="" width={20} height={20} />
+                <div className="relative flex items-center">
+                  <Image src={item.icon} alt="" width={20} height={20} />
+                  {item.label === "Messages" && messageCount > 0 && (
+                    <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] leading-none px-1.5 py-0.5 rounded-full">
+                      {messageCount > 9 ? "9+" : messageCount}
+                    </span>
+                  )}
+                  {item.label === "Announcements" && announcementCount > 0 && (
+                    <span className="absolute -top-1.5 -right-2 bg-blue-500 text-white text-[10px] leading-none px-1.5 py-0.5 rounded-full">
+                      {announcementCount > 9 ? "9+" : announcementCount}
+                    </span>
+                  )}
+                </div>
                 <span className="hidden lg:block">{item.label}</span>
               </Link>
             ))}

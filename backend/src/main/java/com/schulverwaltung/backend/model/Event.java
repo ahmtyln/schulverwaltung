@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -31,6 +32,9 @@ public class Event {
 
     @Column(name = "date")
     private LocalDateTime date;
+
+    @Column(name = "price")
+    private BigDecimal price;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)

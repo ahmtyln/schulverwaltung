@@ -46,6 +46,7 @@ const columns = [
   },
 ];
 const TeacherListPage = () => {
+  const isAdmin = role?.toString().toUpperCase() === 'ADMIN';
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -56,7 +57,7 @@ const TeacherListPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const teachersPerPage = 10;
+  const teachersPerPage = 8;
 
   useEffect(() => {
     const loadData = async () => {
@@ -99,7 +100,7 @@ const TeacherListPage = () => {
         <p className="text-gray-500 max-w-md">
           Start by adding the first teacher. The form will automatically save the information to the backend database.
         </p>
-        {role === "admin" && <FormModal table="teacher" type="create" />}
+        {isAdmin && <FormModal table="teacher" type="create" />}
       </div>
     );
   }
@@ -173,7 +174,7 @@ const TeacherListPage = () => {
             </button>
           </Link>
 
-          {role === "admin" && (<FormModal table='teacher' type='delete' id={item.id} />)}
+          {isAdmin && (<FormModal table='teacher' type='delete' id={item.id} />)}
         </div>
       </td>
 
@@ -188,12 +189,9 @@ const TeacherListPage = () => {
           <TableSearch onSearch={handleSearch} />
           <div className='flex items-center gap-4 self-end'>
             <button onClick={() => handleSort("teacherId")} className='w-8 h-8 flex items-center justify-center rounded-full bg-yellow hover:cursor-pointer'>
-              <Image src="/filter.png" alt='' width={20} height={20} />
-            </button>
-            <button onClick={() => handleSort("subjects")} className='w-8 h-8 flex items-center justify-center rounded-full bg-yellow hover:cursor-pointer'>
               <Image src="/sort.png" alt='' width={20} height={20} />
             </button>
-            {role === "admin" && (
+            {isAdmin && (
               <FormModal table='teacher' type='create' />)}
           </div>
         </div>

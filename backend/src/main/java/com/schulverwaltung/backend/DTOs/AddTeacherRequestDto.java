@@ -23,13 +23,15 @@ public class AddTeacherRequestDto {
     @NotBlank
     private String email;
 
-    @NotBlank @Size(min=6)
+    @NotBlank @Size(min=3)
     private String password;
 
     @NotBlank
     private String phone;
 
     private String address;
+
+    private String bloodType;
 
     private List<Long> lessonIds;
 }

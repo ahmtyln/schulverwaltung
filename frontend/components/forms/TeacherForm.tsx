@@ -14,6 +14,7 @@ const schema = z.object({
   surname: z.string().min(1, "Surname is required"),
   phone: z.string().min(10, "Phone min 10 digits"),
   address: z.string().optional(),
+  bloodType: z.string().optional(),
   lessonIds: z.array(z.number()).optional(),
 });
 
@@ -50,6 +51,7 @@ const TeacherForm = ({
       email: data?.email ?? data?.user?.email ?? "",
       phone: data?.phone ?? "",
       address: data?.address ?? "",
+      bloodType: data?.bloodType ?? "",
       lessonIds: data?.lessonIds ?? [],
     },
   });
@@ -74,6 +76,7 @@ const TeacherForm = ({
             email: t.email ?? "",
             phone: t.phone ?? "",
             address: t.address ?? "",
+            bloodType: t.bloodType ?? "",
             lessonIds: t.lessonIds ?? [],
           });
         })
@@ -98,6 +101,7 @@ const TeacherForm = ({
         phone: formData.phone,
         email: formData.email,
         address: formData.address ?? "",
+        bloodType: formData.bloodType ?? "",
         lessonIds: formData.lessonIds ?? [],
       };
 
@@ -150,7 +154,10 @@ const TeacherForm = ({
           <InputField label="Surname" name="surname" register={register} error={errors.surname} />
           <InputField label="Phone" name="phone" register={register} error={errors.phone} />
         </div>
-        <InputField label="Address" name="address" register={register} error={errors.address} />
+        <div className="flex justify-between flex-wrap gap-4">
+          <InputField label="Address" name="address" register={register} error={errors.address} />
+          <InputField label="Blood Type" name="bloodType" register={register} error={errors.bloodType} />
+        </div>
       </div>
 
       {/* Lessons (assigns teacher to lessons → shows as Subjects/Classes in list) */}

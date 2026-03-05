@@ -22,7 +22,7 @@ public class AddStudentRequestDto {
     @NotBlank
     private String email;
 
-    @Size(min = 6, message = "Password muss mindestens 6 Character sein.")
+    @Size(min = 3, message = "Password muss mindestens 3 Character sein.")
     private String password;
 
     private String phone;

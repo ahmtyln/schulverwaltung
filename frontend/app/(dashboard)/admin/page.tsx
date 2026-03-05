@@ -109,7 +109,7 @@ const AdminPage = () => {
           <UserCard type="student" count={studentCount} />
           <UserCard type="teacher" count={teacherCount} />
           <UserCard type="parent" count={parentCount} />
-          <UserCard type="staff" count={0} />
+          {/*<UserCard type="staff" count={0} /> */}
         </div>
         <div className="flex gap-4 flex-col lg:flex-row">
           <div className="w-full lg:w-1/3 h-112.5">
@@ -119,9 +119,9 @@ const AdminPage = () => {
             <AttendanceChart data={attendanceData} />
           </div>
         </div>
-        <div className="w-full h-125">
+        {/*<div className="w-full h-125">
           <FinanceChart />
-        </div>
+        </div>*/}
       </div>
 
       <div className="w-full lg:w-1/3 flex flex-col gap-8">

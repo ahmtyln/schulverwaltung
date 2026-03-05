@@ -14,6 +14,7 @@ import { useState, useEffect } from 'react';
 
 
 const SingleTeacherPage = () => {
+  const isAdmin = role?.toString().toUpperCase() === 'ADMIN';
   const params = useParams(); 
   const [teacher, setTeacher] = useState<Teacher | null>(null);  // ← State
   const [scheduleEvents, setScheduleEvents] = useState<any[]>([]);
@@ -73,17 +74,19 @@ const SingleTeacherPage = () => {
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">{teacher.name}</h1>
-                {role === "admin" && <FormModal
-                  table="teacher"
-                  type="update"
-                  data={{
-                    id: teacher.id,
-                    name: teacher.name.split(' ')[0],
-                    surname: teacher.name.split(' ').slice(1).join(' '),
-                    phone: teacher.phone,
-                    email: teacher.email,
-                  }}
-                />}
+                {isAdmin && (
+                  <FormModal
+                    table="teacher"
+                    type="update"
+                    data={{
+                      id: teacher.id,
+                      name: teacher.name.split(' ')[0],
+                      surname: teacher.name.split(' ').slice(1).join(' '),
+                      phone: teacher.phone,
+                      email: teacher.email,
+                    }}
+                  />
+                )}
               </div>
               <p className="text-sm text-gray-500">{teacher.address}</p>
 
@@ -121,15 +124,15 @@ const SingleTeacherPage = () => {
             <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
               <Image src="/singleBranch.png" alt="" width={24} height={24} className="w-6 h-6" />
               <div>
-                <h1 className="text-xl font-semibold">{teacher.classes?.length || 2}</h1>
-                <span className="text-sm text-gray-400">Classes</span>
+                <h1 className="text-xl font-semibold">{teacher.subjects?.length || 2}</h1>
+                <span className="text-sm text-gray-400">Subjects</span>
               </div>
             </div>
 
             <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
               <Image src="/singleLesson.png" alt="" width={24} height={24} className="w-6 h-6" />
               <div>
-                <h1 className="text-xl font-semibold">{teacher.subjects?.length || 6}</h1>
+                <h1 className="text-xl font-semibold">{teacher.lessonIds?.length || 6}</h1>
                 <span className="text-sm text-gray-400">Lessons</span>
               </div>
             </div>
@@ -151,27 +154,14 @@ const SingleTeacherPage = () => {
       </div>
       {/* RIGHT */}
       <div className="w-full xl:w-1/3 flex flex-col gap-4">
-        <div className="bg-white p-4 rounded-md">
-          <h1 className="text-xl font-semibold">Shortcuts</h1>
-          <div className="mt-4 flex gap-4 flex-wrap text-xs text-gray-500">
-            <Link className="p-3 rounded-md bg-skyLight" href="/">
-              Teacher&apos;s Classes
-            </Link>
-            <Link className="p-3 rounded-md bg-purpleLight" href="/">
-              Teacher&apos;s Students
-            </Link>
-            <Link className="p-3 rounded-md bg-yellowLight" href="/">
-              Teacher&apos;s Lessons
-            </Link>
-            <Link className="p-3 rounded-md bg-pink-50" href="/">
-              Teacher&apos;s Exams
-            </Link>
-            <Link className="p-3 rounded-md bg-skyLight" href="/">
-              Teacher&apos;s Assignments
-            </Link>
-          </div>
-        </div>
-        <Performance />
+        
+        <Performance
+          teacherStats={{
+            subjectsCount: teacher.subjects?.length ?? 0,
+            classesCount: teacher.classes?.length ?? 0,
+            lessonsCount: teacher.lessonIds?.length ?? 0,
+          }}
+        />
         <Announcements />
       </div>
     </div>

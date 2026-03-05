@@ -17,7 +17,7 @@ const schema = z.object({
   password: z
     .string()
     .optional()
-    .refine((val) => !val || val.length >= 8, { message: "Password must be at least 8 characters long!" }),
+    .refine((val) => !val || val.length >= 3, { message: "Password must be at least 3 characters long!" }),
   firstName: z.string().min(1, { message: "First name is required!" }),
   lastName: z.string().min(1, { message: "Last name is required!" }),
   phone: z.string().min(1, { message: "Phone is required!" }),
@@ -126,33 +126,37 @@ const StudentForm = ({
       <h1 className="text-xl font-semibold">
         {type === "create" ? "Create new student" : "Update student"}
       </h1>
-      <span className="text-xs text-gray-400 font-medium">
-        Authentication Information
-      </span>
-      <div className="flex justify-between flex-wrap gap-4">
-        <InputField
-          label="Username"
-          name="username"
-          defaultValue={data?.username}
-          register={register}
-          error={errors?.username}
-        />
-        <InputField
-          label="Email"
-          name="email"
-          defaultValue={data?.email}
-          register={register}
-          error={errors?.email}
-        />
-        <InputField
-          label="Password"
-          name="password"
-          type="password"
-          defaultValue={data?.password}
-          register={register}
-          error={errors?.password}
-        />
-      </div>
+      {type === "create" && (
+        <>
+          <span className="text-xs text-gray-400 font-medium">
+            Authentication Information
+          </span>
+          <div className="flex justify-between flex-wrap gap-4">
+            <InputField
+              label="Username"
+              name="username"
+              defaultValue={data?.username}
+              register={register}
+              error={errors?.username}
+            />
+            <InputField
+              label="Email"
+              name="email"
+              defaultValue={data?.email}
+              register={register}
+              error={errors?.email}
+            />
+            <InputField
+              label="Password"
+              name="password"
+              type="password"
+              defaultValue={data?.password}
+              register={register}
+              error={errors?.password}
+            />
+          </div>
+        </>
+      )}
       <span className="text-xs text-gray-400 font-medium">
         Personal Information
       </span>

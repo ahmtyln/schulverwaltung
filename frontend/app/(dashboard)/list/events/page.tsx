@@ -12,10 +12,13 @@ const columns = [
   { header: 'Title', accessor: 'title' },
   { header: 'Class', accessor: 'class' },
   { header: 'Date', accessor: 'date', className: 'hidden md:table-cell' },
+  { header: 'Price', accessor: 'price', className: 'hidden md:table-cell' },
   { header: 'Actions', accessor: 'action' },
 ];
 
 const ITEMS_PER_PAGE = 10;
+
+type SortOrder = 'asc' | 'desc' | null;
 
 const EventListPage = () => {
   const role = useRole();
@@ -24,19 +27,22 @@ const EventListPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
 
   const isStudent = role === 'STUDENT';
   const isParent = role === 'PARENT';
+  const isTeacher = role === 'TEACHER';
   const studentIds = me?.studentIds ?? [];
+  const stableStudentIds = me?.studentIds;
   const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
 
   useEffect(() => {
-    if (isStudent || isParent) fetchMe().then(setMe).catch(() => {});
-  }, [isStudent, isParent]);
+    if (isStudent || isParent || isTeacher) fetchMe().then(setMe).catch(() => {});
+  }, [isStudent, isParent, isTeacher]);
 
   useEffect(() => {
-    if (isParent && studentIds.length > 0 && selectedChildId === null) setSelectedChildId(studentIds[0]);
-  }, [isParent, studentIds, selectedChildId]);
+    if (isParent && Array.isArray(stableStudentIds) && stableStudentIds.length > 0 && selectedChildId === null) setSelectedChildId(stableStudentIds[0]);
+  }, [isParent, selectedChildId, stableStudentIds]);
 
   useEffect(() => {
     if (isStudent) {
@@ -66,11 +72,27 @@ const EventListPage = () => {
         .finally(() => setLoading(false));
       return;
     }
+    if (isTeacher && me?.teacherId != null) {
+      fetchEvents({ teacherId: me.teacherId })
+        .then(setEvents)
+        .catch(() => setEvents([]))
+        .finally(() => setLoading(false));
+      return;
+    }
+    if (isTeacher) {
+      if (me != null && me.teacherId == null) {
+        setLoading(false);
+        setEvents([]);
+      } else if (me?.teacherId != null) {
+        // already handled above
+      }
+      return;
+    }
     fetchEvents()
       .then(setEvents)
       .catch(() => setEvents([]))
       .finally(() => setLoading(false));
-  }, [isStudent, isParent, me?.studentId, me?.classId, me?.studentSummaries, selectedChildId]);
+  }, [isStudent, isParent, isTeacher, me?.studentId, me?.classId, me?.teacherId, me?.studentSummaries, selectedChildId]);
 
   const formatDate = (d: string) => {
     try {
@@ -87,16 +109,42 @@ const EventListPage = () => {
       e.className?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortOrder === null) return 0;
+    const aKey = (a.title || a.className || '').toLowerCase();
+    const bKey = (b.title || b.className || '').toLowerCase();
+    const cmp = aKey.localeCompare(bKey);
+    return sortOrder === 'asc' ? cmp : -cmp;
+  });
+
+  const toggleSort = () => {
+    setSortOrder((prev) => (prev === null ? 'asc' : prev === 'asc' ? 'desc' : null));
+    setCurrentPage(1);
+  };
+
   const renderRow = (item: EventListItem) => (
     <tr
       key={item.id}
       className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-purpleLight"
     >
-      <td className="flex items-center gap-4 p-4">{item.title}</td>
+      <td className="flex items-center gap-4 p-4">
+        <span className="font-medium">{item.title}</span>
+      </td>
       <td>{item.className || '—'}</td>
       <td className="hidden md:table-cell">{formatDate(item.date)}</td>
+      <td className="hidden md:table-cell">
+        {item.price != null ? `€${item.price.toFixed(2)}` : '—'}
+      </td>
       <td>
         <div className="flex items-center gap-2">
+          {isParent && (
+            <button
+              type="button"
+              className="px-3 py-1 rounded-full text-xs bg-purple text-white hover:cursor-pointer"
+            >
+              Pay
+            </button>
+          )}
           {(role === 'ADMIN' || role === 'TEACHER') && (
             <>
               <FormModal table="event" type="update" data={item} />
@@ -138,11 +186,13 @@ const EventListPage = () => {
         <div className='flex flex-col md:flex-row items-center gap-4 w-full md:w-auto'>
           <TableSearch onSearch={setSearchTerm} />
           <div className='flex items-center gap-4 self-end'>
-            <button className='w-8 h-8 flex items-center justify-center rounded-full bg-yellow'>
-              <Image src="/filter.png" alt='' width={20} height={20} />
-            </button>
-            <button className='w-8 h-8 flex items-center justify-center rounded-full bg-yellow'>
-              <Image src="/sort.png" alt='' width={20} height={20} />
+            <button
+              type="button"
+              onClick={toggleSort}
+              className={`w-8 h-8 flex items-center justify-center rounded-full bg-yellow ${sortOrder ? 'ring-2 ring-blue-400' : ''}`}
+              title={sortOrder === null ? 'Sort by title' : sortOrder === 'asc' ? 'A→Z (click for Z→A)' : 'Z→A (click to clear)'}
+            >
+              <Image src="/sort.png" alt="Sort" width={20} height={20} />
             </button>
             {(role === 'ADMIN' || role === 'TEACHER') && <FormModal table="event" type="create" />}
           </div>
@@ -152,11 +202,11 @@ const EventListPage = () => {
       <Table
         columns={columns}
         renderRow={renderRow}
-        data={filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)}
+        data={sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)}
       />
       <Pagination
         currentPage={currentPage}
-        totalPages={Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))}
+        totalPages={Math.max(1, Math.ceil(sorted.length / ITEMS_PER_PAGE))}
         onPageChange={setCurrentPage}
       />
 

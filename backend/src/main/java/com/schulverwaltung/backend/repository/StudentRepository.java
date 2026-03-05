@@ -32,4 +32,10 @@ public interface StudentRepository extends JpaRepository <Student,Long> {
     boolean existsByPhone(String phone);
 
     boolean existsByPhoneAndIdNot(String phone, Long id);
+
+    @Query("SELECT s FROM Student s WHERE s.aClass.id = :classId")
+    List<Student> findByAClass_Id(@Param("classId") Long classId);
+
+    @Query("SELECT s FROM Student s WHERE s.aClass.id IN :classIds")
+    List<Student> findByAClass_IdIn(@Param("classIds") List<Long> classIds);
 }

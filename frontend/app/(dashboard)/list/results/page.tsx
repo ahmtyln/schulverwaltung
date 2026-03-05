@@ -21,6 +21,8 @@ const columns = [
 
 const ITEMS_PER_PAGE = 10;
 
+type SortOrder = "asc" | "desc" | null;
+
 const ResultListPage = () => {
   const role = useRole();
   const [me, setMe] = useState<MeDto | null>(null);
@@ -29,22 +31,25 @@ const ResultListPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
 
   const studentIds = me?.studentIds ?? [];
   const isParent = role === 'PARENT';
   const isStudent = role === 'STUDENT';
+  const stableStudentIds = me?.studentIds;
+  const isTeacher = role === 'TEACHER';
 
   useEffect(() => {
-    if (isParent || isStudent) {
+    if (isParent || isStudent || isTeacher) {
       fetchMe().then(setMe).catch(() => {});
     }
-  }, [isParent, isStudent]);
+  }, [isParent, isStudent, isTeacher]);
 
   useEffect(() => {
-    if (isParent && studentIds.length > 0 && selectedChildId === null) {
-      setSelectedChildId(studentIds[0]);
+    if (isParent && Array.isArray(stableStudentIds) && stableStudentIds.length > 0 && selectedChildId === null) {
+      setSelectedChildId(stableStudentIds[0]);
     }
-  }, [isParent, studentIds, selectedChildId]);
+  }, [isParent, selectedChildId, stableStudentIds]);
 
   useEffect(() => {
     if (isStudent) {
@@ -63,18 +68,49 @@ const ResultListPage = () => {
       setLoading(false);
       return;
     }
-    const params = isParent && selectedChildId != null ? { studentId: selectedChildId } : undefined;
-    fetchResults(params)
+    if (isParent && selectedChildId != null) {
+      fetchResults({ studentId: selectedChildId })
+        .then(setResults)
+        .catch(() => setResults([]))
+        .finally(() => setLoading(false));
+      return;
+    }
+    if (isTeacher) {
+      if (me?.teacherId == null) {
+        setLoading(false);
+        setResults([]);
+        return;
+      }
+      fetchResults({ teacherId: me.teacherId })
+        .then(setResults)
+        .catch(() => setResults([]))
+        .finally(() => setLoading(false));
+      return;
+    }
+    fetchResults()
       .then(setResults)
       .catch(() => setResults([]))
       .finally(() => setLoading(false));
-  }, [isParent, isStudent, selectedChildId, me?.studentId]);
+  }, [isParent, isStudent, isTeacher, selectedChildId, me]);
 
   const filtered = results.filter(
     (r) =>
       r.subjectName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.studentName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortOrder === null) return 0;
+    const aKey = (a.subjectName || a.studentName || "").toLowerCase();
+    const bKey = (b.subjectName || b.studentName || "").toLowerCase();
+    const cmp = aKey.localeCompare(bKey);
+    return sortOrder === "asc" ? cmp : -cmp;
+  });
+
+  const toggleSort = () => {
+    setSortOrder((prev) => (prev === null ? "asc" : prev === "asc" ? "desc" : null));
+    setCurrentPage(1);
+  };
 
   const renderRow = (item: ResultListItem) => (
     <tr key={item.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-purpleLight">
@@ -122,16 +158,24 @@ const ResultListPage = () => {
       )}
       <div className="flex items-center justify-between">
         <h1 className="hidden md:block text-lg font-semibold">
-          {isStudent ? 'My Results' : isParent ? (selectedChildId ? `Results (${getStudentDisplayName(me, selectedChildId)})` : 'Results') : 'All Results'}
+          {isStudent
+            ? 'My Results'
+            : isParent
+            ? (selectedChildId ? `Results (${getStudentDisplayName(me, selectedChildId)})` : 'Results')
+            : isTeacher
+            ? 'My Results'
+            : 'All Results'}
         </h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch onSearch={setSearchTerm} />
           <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-yellow">
-              <Image src="/filter.png" alt="" width={20} height={20} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-yellow">
-              <Image src="/sort.png" alt="" width={20} height={20} />
+            <button
+              type="button"
+              onClick={toggleSort}
+              className={`w-8 h-8 flex items-center justify-center rounded-full bg-yellow ${sortOrder ? "ring-2 ring-blue-400" : ""}`}
+              title={sortOrder === null ? "Sort by subject" : sortOrder === "asc" ? "A→Z (click for Z→A)" : "Z→A (click to clear)"}
+            >
+              <Image src="/sort.png" alt="Sort" width={20} height={20} />
             </button>
             {(role === 'ADMIN' || role === 'TEACHER') && (
               <FormModal table="result" type="create" />
@@ -142,11 +186,11 @@ const ResultListPage = () => {
       <Table
         columns={columns}
         renderRow={renderRow}
-        data={filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)}
+        data={sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)}
       />
       <Pagination
         currentPage={currentPage}
-        totalPages={Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))}
+        totalPages={Math.max(1, Math.ceil(sorted.length / ITEMS_PER_PAGE))}
         onPageChange={setCurrentPage}
       />
     </div>

@@ -6,10 +6,15 @@ import com.schulverwaltung.backend.DTOs.RegisterResponseDto;
 import com.schulverwaltung.backend.enums.Role;
 import com.schulverwaltung.backend.exceptions.EmailAlreadyExistsException;
 import com.schulverwaltung.backend.exceptions.UsernameAlreadyExistsException;
+import com.schulverwaltung.backend.model.Aclass;
+import com.schulverwaltung.backend.model.Lesson;
 import com.schulverwaltung.backend.model.Parent;
 import com.schulverwaltung.backend.model.Student;
+import com.schulverwaltung.backend.model.Teacher;
 import com.schulverwaltung.backend.model.User;
 import com.schulverwaltung.backend.repository.ParentRepository;
+import com.schulverwaltung.backend.repository.StudentRepository;
+import com.schulverwaltung.backend.repository.TeacherRepository;
 import com.schulverwaltung.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -18,7 +23,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +34,8 @@ import java.util.stream.Collectors;
 public class ParentService {
     private final UserRepository userRepository;
     private final ParentRepository parentRepository;
+    private final TeacherRepository teacherRepository;
+    private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
 
     public RegisterResponseDto register(RegisterRequestDto request){
@@ -76,6 +86,29 @@ public class ParentService {
         return parentRepository.findAll().stream()
                 .map(this::toListDto)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ParentListDto> getParentsByTeacherId(Long teacherId) {
+        if (teacherId == null) return List.of();
+        Teacher t = teacherRepository.findById(teacherId).orElse(null);
+        if (t == null) return List.of();
+        Set<Long> classIds = new HashSet<>();
+        for (Lesson l : t.getLessons()) {
+            if (l.getAClass() != null && l.getAClass().getId() != null) classIds.add(l.getAClass().getId());
+        }
+        for (Aclass c : t.getAclasses()) {
+            if (c.getId() != null) classIds.add(c.getId());
+        }
+        if (classIds.isEmpty()) return List.of();
+        List<Student> students = studentRepository.findByAClass_IdIn(new ArrayList<>(classIds));
+        Set<Long> parentIds = new HashSet<>();
+        for (Student s : students) {
+            if (s.getParent() != null && s.getParent().getId() != null) parentIds.add(s.getParent().getId());
+        }
+        if (parentIds.isEmpty()) return List.of();
+        List<Parent> parents = parentRepository.findAllById(parentIds);
+        return parents.stream().map(this::toListDto).collect(Collectors.toList());
     }
 
     private ParentListDto toListDto(Parent p) {

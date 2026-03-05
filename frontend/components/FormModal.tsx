@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteAssignment, deleteExam, deleteResult, deleteStudent, deleteTeacher, deleteParent, deleteEvent, deleteAnnouncement, deleteLesson } from "@/lib/api";
+import { deleteAssignment, deleteExam, deleteResult, deleteStudent, deleteTeacher, deleteParent, deleteSubject, deleteClass, deleteEvent, deleteAnnouncement, deleteLesson } from "@/lib/api";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Dispatch, JSX, SetStateAction, useState } from "react";
@@ -40,6 +40,12 @@ const LessonForm = dynamic(() => import("./forms/LessonForm"), {
 const AttendanceForm = dynamic(() => import("./forms/AttendanceForm"), {
   loading: () => <h1>Loading...</h1>,
 });
+const SubjectForm = dynamic(() => import("./forms/SubjectForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
+const ClassForm = dynamic(() => import("./forms/ClassForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
 
 const forms: {
   [key: string]: (type: "create" | "update", data?: any, setOpen?: Dispatch<SetStateAction<boolean>>) => JSX.Element;
@@ -54,6 +60,8 @@ const forms: {
   announcement: (type, data, setOpen) => <AnnouncementForm type={type} data={data} setOpen={setOpen} />,
   lesson: (type, data, setOpen) => <LessonForm type={type} data={data} setOpen={setOpen} />,
   attendance: (type, data, setOpen) => <AttendanceForm type={type} data={data} setOpen={setOpen} />,
+  subject: (type, data, setOpen) => <SubjectForm type={type} data={data} setOpen={setOpen} />,
+  class: (type, data, setOpen) => <ClassForm type={type} data={data} setOpen={setOpen} />,
 };
 
 const FormModal = ({
@@ -99,6 +107,8 @@ const FormModal = ({
         case 'teacher': deleteFn = deleteTeacher; break;
         case 'student': deleteFn = deleteStudent; break;
         case 'parent': deleteFn = deleteParent; break;
+        case 'subject': deleteFn = deleteSubject; break;
+        case 'class': deleteFn = deleteClass; break;
         case 'exam': deleteFn = deleteExam; break;
         case 'assignment': deleteFn = deleteAssignment; break;
         case 'result': deleteFn = deleteResult; break;

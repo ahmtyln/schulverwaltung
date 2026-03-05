@@ -30,7 +30,11 @@ public class StudentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<StudentListDto>> getAllStudents() {
+    public ResponseEntity<List<StudentListDto>> getAllStudents(
+            @RequestParam(required = false) Long teacherId) {
+        if (teacherId != null) {
+            return ResponseEntity.ok(studentService.getStudentsByTeacherId(teacherId));
+        }
         return ResponseEntity.ok(studentService.getAllStudents());
     }
 

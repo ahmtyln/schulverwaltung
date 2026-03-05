@@ -19,6 +19,8 @@ const columns = [
 
 const ITEMS_PER_PAGE = 10;
 
+type SortOrder = "asc" | "desc" | null;
+
 const AssignmentListPage = () => {
   const role = useRole();
   const [me, setMe] = useState<MeDto | null>(null);
@@ -27,6 +29,7 @@ const AssignmentListPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
 
   const studentIds = me?.studentIds ?? [];
   const isParent = role === "PARENT";
@@ -37,9 +40,12 @@ const AssignmentListPage = () => {
     if (isParent || isStudent || isTeacher) fetchMe().then(setMe).catch(() => {});
   }, [isParent, isStudent, isTeacher]);
 
+  const stableStudentIds = me?.studentIds;
   useEffect(() => {
-    if (isParent && studentIds.length > 0 && selectedChildId === null) setSelectedChildId(studentIds[0]);
-  }, [isParent, studentIds, selectedChildId]);
+    if (isParent && Array.isArray(stableStudentIds) && stableStudentIds.length > 0 && selectedChildId === null) {
+      setSelectedChildId(stableStudentIds[0]);
+    }
+  }, [isParent, selectedChildId, stableStudentIds]);
 
   useEffect(() => {
     if (isStudent) {
@@ -61,7 +67,8 @@ const AssignmentListPage = () => {
       return;
     }
     if (isParent) {
-      const childId = selectedChildId ?? studentIds[0] ?? null;
+      const ids = me?.studentIds;
+      const childId = selectedChildId ?? (Array.isArray(ids) && ids.length > 0 ? ids[0] : null);
       if (childId != null) {
         fetchAssignments({ studentId: childId }).then(setAssignments).catch(() => setAssignments([])).finally(() => setLoading(false));
       } else {
@@ -71,7 +78,7 @@ const AssignmentListPage = () => {
       return;
     }
     fetchAssignments().then(setAssignments).catch(() => setAssignments([])).finally(() => setLoading(false));
-  }, [isParent, isStudent, isTeacher, selectedChildId, studentIds, me, me?.studentId, me?.teacherId]);
+  }, [isParent, isStudent, isTeacher, selectedChildId, me]);
 
   const filtered = assignments.filter(
     (a) =>
@@ -80,6 +87,19 @@ const AssignmentListPage = () => {
       a.teacherName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortOrder === null) return 0;
+    const aKey = (a.subjectName || a.className || a.title || "").toLowerCase();
+    const bKey = (b.subjectName || b.className || b.title || "").toLowerCase();
+    const cmp = aKey.localeCompare(bKey);
+    return sortOrder === "asc" ? cmp : -cmp;
+  });
+
+  const toggleSort = () => {
+    setSortOrder((prev) => (prev === null ? "asc" : prev === "asc" ? "desc" : null));
+    setCurrentPage(1);
+  };
 
   const renderRow = (item: AssignmentListItem) => (
     <tr key={item.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-purpleLight">
@@ -132,11 +152,19 @@ const AssignmentListPage = () => {
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch onSearch={setSearchTerm} />
           <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-yellow">
-              <Image src="/filter.png" alt="" width={20} height={20} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-yellow">
-              <Image src="/sort.png" alt="" width={20} height={20} />
+            <button
+              type="button"
+              onClick={toggleSort}
+              className={`w-8 h-8 flex items-center justify-center rounded-full bg-yellow ${sortOrder ? "ring-2 ring-blue-400" : ""}`}
+              title={
+                sortOrder === null
+                  ? "Sort by subject"
+                  : sortOrder === "asc"
+                  ? "A→Z (click for Z→A)"
+                  : "Z→A (click to clear)"
+              }
+            >
+              <Image src="/sort.png" alt="Sort" width={20} height={20} />
             </button>
             {(role === 'ADMIN' || role === 'TEACHER') && (
               <FormModal table="assignment" type="create" />
@@ -147,11 +175,11 @@ const AssignmentListPage = () => {
       <Table
         columns={columns}
         renderRow={renderRow}
-        data={filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)}
+        data={sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)}
       />
       <Pagination
         currentPage={currentPage}
-        totalPages={Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))}
+        totalPages={Math.max(1, Math.ceil(sorted.length / ITEMS_PER_PAGE))}
         onPageChange={setCurrentPage}
       />
     </div>

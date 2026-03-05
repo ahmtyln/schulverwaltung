@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -280,6 +281,7 @@ public class AdminService {
         teacherRepository.delete(teacher);
     }
 
+    @Transactional
     public ParentResponseDto addParent(AddParentRequestDto request){
         if(userRepository.existsByEmail(request.getEmail())){
             throw new EmailAlreadyExistsException("Email existiert bereits.");
@@ -318,6 +320,7 @@ public class AdminService {
                 .build();
     }
 
+    @Transactional
     public ParentResponseDto updateParent(Long id, UpdateParentRequestDto request){
         if (!id.equals(request.getId())) {
             throw new RuntimeException("Path ID ≠ Body ID!");
@@ -367,10 +370,21 @@ public class AdminService {
     }
 
 
+    @Transactional
     public void deleteParent(Long id) {
         Parent parent = parentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Parent ist nicht gefunden."));
+        // Unlink all students from this parent to avoid FK constraint
+        List<Student> students = studentRepository.findByParent_Id(id);
+        for (Student s : students) {
+            s.setParent(null);
+        }
+        studentRepository.saveAll(students);
+        User parentUser = parent.getUser();
         parentRepository.delete(parent);
+        if (parentUser != null) {
+            userRepository.delete(parentUser);
+        }
     }
 
 
